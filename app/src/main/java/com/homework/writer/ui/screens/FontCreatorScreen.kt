@@ -3,10 +3,27 @@ package com.homework.writer.ui.screens
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -16,88 +33,105 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun FontCreatorScreen(
     currentChar: Char,
+    savedPaths: List<Path>,
     onCharacterFinished: (List<Path>) -> Unit,
-    onNextChar: () -> Unit
+    onNextChar: () -> Unit,
+    onPreviousChar: () -> Unit
 ) {
-    val paths = remember { mutableStateListOf<Path>() }
-    var currentPath by remember { mutableStateOf<Path?>(null) }
+    val paths = remember(currentChar) { mutableStateListOf<Path>().apply { addAll(savedPaths) } }
+    var currentPoints by remember(currentChar) { mutableStateOf<List<Offset>>(emptyList()) }
+
+    fun pointsToPath(points: List<Offset>): Path = Path().apply {
+        if (points.isNotEmpty()) {
+            moveTo(points.first().x, points.first().y)
+            points.drop(1).forEach { lineTo(it.x, it.y) }
+        }
+    }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.SpaceBetween
+        modifier = Modifier.fillMaxSize().padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text(
             text = "Нарисуйте символ: $currentChar",
             style = MaterialTheme.typography.headlineMedium
         )
+        Text(
+            text = "Нарисовано штрихов: ${paths.size}",
+            style = MaterialTheme.typography.bodyMedium
+        )
 
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f)
+                .height(300.dp)
                 .background(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.shapes.medium)
-                .pointerInput(currentChar) { // Сбрасываем жест при смене буквы
+                .pointerInput(currentChar) {
                     detectDragGestures(
-                        onDragStart = { offset ->
-                            currentPath = Path().apply {
-                                moveTo(offset.x, offset.y)
-                            }
-                        },
+                        onDragStart = { offset -> currentPoints = listOf(offset) },
                         onDrag = { change, _ ->
-                            currentPath?.lineTo(change.position.x, change.position.y)
+                            change.consume()
+                            currentPoints = currentPoints + change.position
                         },
                         onDragEnd = {
-                            currentPath?.let {
-                                paths.add(it)
-                                currentPath = null
-                            }
+                            if (currentPoints.isNotEmpty()) paths.add(pointsToPath(currentPoints))
+                            currentPoints = emptyList()
                         },
-                        onDragCancel = {
-                            currentPath = null
-                        }
+                        onDragCancel = { currentPoints = emptyList() }
                     )
+                }
+                .pointerInput(currentChar) {
+                    detectTapGestures { point ->
+                        paths.add(Path().apply {
+                            moveTo(point.x, point.y)
+                            lineTo(point.x + 1f, point.y + 1f)
+                        })
+                    }
                 }
         ) {
             Canvas(modifier = Modifier.fillMaxSize()) {
-                drawRect(color = Color.LightGray.copy(alpha = 0.3f))
-                
-                for (path in paths) {
-                    drawPath(
-                        path = path,
-                        color = Color.Black,
-                        style = Stroke(width = 8f)
-                    )
+                drawRect(color = Color.White.copy(alpha = 0.55f))
+                paths.forEach { path ->
+                    drawPath(path, color = Color.Black, style = Stroke(width = 8f))
                 }
-                currentPath?.let {
-                    drawPath(
-                        path = it,
-                        color = Color.DarkGray,
-                        style = Stroke(width = 8f)
-                    )
+                if (currentPoints.isNotEmpty()) {
+                    drawPath(pointsToPath(currentPoints), color = Color.DarkGray, style = Stroke(width = 8f))
                 }
             }
         }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Button(onClick = { 
-                paths.clear()
-                currentPath = null
-            }) {
-                Text("Очистить")
-            }
-            Button(onClick = {
-                onCharacterFinished(paths.toList())
-                paths.clear()
-                currentPath = null
-                onNextChar()
-            }) {
-                Text("Далее ➔")
-            }
+            OutlinedButton(
+                modifier = Modifier.fillMaxWidth(0.32f),
+                onClick = {
+                    paths.clear()
+                    currentPoints = emptyList()
+                    onCharacterFinished(emptyList())
+                }
+            ) { Text("Очистить") }
+
+            OutlinedButton(
+                modifier = Modifier.fillMaxWidth(0.32f),
+                onClick = {
+                    onCharacterFinished(paths.toList())
+                    onPreviousChar()
+                }
+            ) { Text("← Назад") }
+
+            Button(
+                modifier = Modifier.fillMaxWidth(0.32f),
+                onClick = {
+                    if (currentPoints.isNotEmpty()) {
+                        paths.add(pointsToPath(currentPoints))
+                        currentPoints = emptyList()
+                    }
+                    onCharacterFinished(paths.toList())
+                    onNextChar()
+                }
+            ) { Text("Далее →") }
         }
     }
 }
