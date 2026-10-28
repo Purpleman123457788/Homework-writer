@@ -18,6 +18,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -36,42 +37,33 @@ fun FontCreatorScreen(
     onNextChar: () -> Unit,
     onPreviousChar: () -> Unit
 ) {
-    val noteTitle = remember { mutableStateOf("Конспект по теме: ${currentChar}") }
-    val noteSubject = remember { mutableStateOf("Математика / История / Программирование") }
+    val noteTitle = remember { mutableStateOf("Конспект по теме: $currentChar") }
+    val noteSubject = remember { mutableStateOf("Математика") }
     val noteTemplate = remember { mutableStateOf("Кратко") }
     val noteBullets = remember {
         mutableStateListOf(
-            "Ключевая идея: тема раскрывается через основные доказательства.",
-            "Главный вывод: процесс идёт быстрее при системной структуре.",
-            "Практика: закрепляем материал на примерах и ответах."
+            "Ключевая идея: суть темы раскрывается через основные понятия.",
+            "Главный вывод: материал можно быстро повторить после нескольких примеров.",
+            "Практика: закрепляем знания через задачи и ответы на типовые вопросы."
         )
     }
+    val previewText = remember { mutableStateOf("") }
 
-    val previewText = remember {
-        mutableStateOf(
-            "Тема: ${noteSubject.value}\n\n" +
-                "Ключевой тезис: материал важен для подготовки к контрольной работе.\n\n" +
-                "1. Понимание основ.\n" +
-                "2. Применение на примерах.\n" +
-                "3. Проверка и закрепление."
-        )
-    }
-
-    fun buildPreview(): String {
-        val bullets = noteBullets.joinToString(separator = "\n") { "• $it" }
-        return buildString {
+    fun refreshPreview() {
+        val points = noteBullets.joinToString(separator = "\n") { "• $it" }
+        previewText.value = buildString {
             append("Тема: ${noteSubject.value}\n")
             append("Заголовок: ${noteTitle.value}\n\n")
             append("Формат: ${noteTemplate.value}\n\n")
             append("Основные пункты:\n")
-            append(bullets)
+            append(points)
             append("\n\n")
-            append("Вывод: материал достаточно понятен, чтобы быстро повторить и подготовиться к проверке.")
+            append("Вывод: материал изложен в понятной форме, достаточно быстро читается и запоминается.")
         }
     }
 
-    fun regeneratePreview() {
-        previewText.value = buildPreview()
+    LaunchedEffect(noteTitle.value, noteSubject.value, noteTemplate.value, noteBullets.toList()) {
+        refreshPreview()
     }
 
     Column(
@@ -88,9 +80,7 @@ fun FontCreatorScreen(
 
         Card(
             modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            )
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
         ) {
             Column(
                 modifier = Modifier
@@ -115,14 +105,41 @@ fun FontCreatorScreen(
                 OutlinedTextField(
                     value = noteTemplate.value,
                     onValueChange = { noteTemplate.value = it },
-                    label = { Text("Формат: Кратко / Развернуто / План") },
+                    label = { Text("Формат: кратко / развернуто / план") },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
         }
 
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Button(
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    noteBullets.add("Новый пункт: добавьте важную мысль, факт или тезис.")
+                    refreshPreview()
+                }
+            ) {
+                Text("Добавить пункт")
+            }
+
+            OutlinedButton(
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    if (noteBullets.isNotEmpty()) {
+                        noteBullets.removeAt(noteBullets.lastIndex)
+                    }
+                    refreshPreview()
+                }
+            ) {
+                Text("Удалить пункт")
+            }
+        }
+
         Text(
-            text = "Пункты конспекта",
+            text = "Основные пункты",
             style = MaterialTheme.typography.titleMedium
         )
 
@@ -134,8 +151,10 @@ fun FontCreatorScreen(
                 OutlinedTextField(
                     value = item,
                     onValueChange = { newValue ->
-                        noteBullets[index] = newValue
-                        regeneratePreview()
+                        if (newValue.isNotEmpty()) {
+                            noteBullets[index] = newValue
+                            refreshPreview()
+                        }
                     },
                     label = { Text("Пункт ${index + 1}") },
                     modifier = Modifier.fillMaxWidth()
@@ -149,7 +168,7 @@ fun FontCreatorScreen(
         ) {
             Button(
                 modifier = Modifier.weight(1f),
-                onClick = { regeneratePreview() }
+                onClick = { refreshPreview() }
             ) {
                 Text("Сгенерировать")
             }
@@ -165,10 +184,10 @@ fun FontCreatorScreen(
                         listOf(
                             "Ключевой тезис: материал должен быть понятен сразу.",
                             "Доказательство: используем факты и примеры.",
-                            "Практика: разобрать вопросы в конце блока."
+                            "Практика: разбираем типовые вопросы и закрепляем материал."
                         )
                     )
-                    regeneratePreview()
+                    refreshPreview()
                 }
             ) {
                 Text("Сброс")
@@ -179,9 +198,7 @@ fun FontCreatorScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(18.dp)),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer
-            )
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
         ) {
             Column(
                 modifier = Modifier
@@ -193,6 +210,7 @@ fun FontCreatorScreen(
                     text = "Предпросмотр",
                     style = MaterialTheme.typography.titleMedium
                 )
+
                 Text(
                     text = previewText.value,
                     style = MaterialTheme.typography.bodyLarge
