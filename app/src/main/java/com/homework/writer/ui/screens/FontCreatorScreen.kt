@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -23,12 +24,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
+import kotlin.math.hypot
 
 @Composable
 fun FontCreatorScreen(
@@ -45,6 +48,13 @@ fun FontCreatorScreen(
         if (points.isNotEmpty()) {
             moveTo(points.first().x, points.first().y)
             points.drop(1).forEach { lineTo(it.x, it.y) }
+        }
+    }
+
+    fun appendPoint(point: Offset) {
+        val last = currentPoints.lastOrNull()
+        if (last == null || hypot((point.x - last.x).toDouble(), (point.y - last.y).toDouble()) > 2.0) {
+            currentPoints = (currentPoints + point).takeLast(2000)
         }
     }
 
@@ -65,13 +75,14 @@ fun FontCreatorScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(300.dp)
-                .background(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.shapes.medium)
+                .clip(RoundedCornerShape(16.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant)
                 .pointerInput(currentChar) {
                     detectDragGestures(
                         onDragStart = { offset -> currentPoints = listOf(offset) },
                         onDrag = { change, _ ->
                             change.consume()
-                            currentPoints = currentPoints + change.position
+                            appendPoint(change.position)
                         },
                         onDragEnd = {
                             if (currentPoints.isNotEmpty()) paths.add(pointsToPath(currentPoints))
@@ -82,10 +93,11 @@ fun FontCreatorScreen(
                 }
                 .pointerInput(currentChar) {
                     detectTapGestures { point ->
-                        paths.add(Path().apply {
-                            moveTo(point.x, point.y)
-                            lineTo(point.x + 1f, point.y + 1f)
-                        })
+                        appendPoint(point)
+                        if (currentPoints.isNotEmpty()) {
+                            paths.add(pointsToPath(currentPoints))
+                            currentPoints = emptyList()
+                        }
                     }
                 }
         ) {
