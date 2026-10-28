@@ -1,0 +1,41 @@
+
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Фиолетовый фон -->
+    <path
+        android:fillColor="#171324"
+        android:pathData="M0,0h108v108h-108z" />
+
+    <!-- Лист тетради -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M27,17h49a5,5 0,0 1,5 5v64a5,5 0,0 1,-5 5h-49a5,5 0,0 1,-5 -5v-64a5,5 0,0 1,5 -5z" />
+
+    <!-- Линии конспекта -->
+    <path
+        android:fillColor="#A78BFA"
+        android:pathData="M32,32h39v3h-39zM32,43h39v3h-39zM32,54h30v3h-30zM32,65h25v3h-25z" />
+
+    <!-- Переписанный текст -->
+    <path
+        android:fillColor="#7C3AED"
+        android:pathData="M32,23h25v4h-25z" />
+
+    <!-- Карандаш -->
+    <path
+        android:fillColor="#C4B5FD"
+        android:pathData="M70,63l7,-7 15,15 -7,7z" />
+
+    <path
+        android:fillColor="#8B5CF6"
+        android:pathData="M68,65l5,-5 15,15 -5,5z" />
+
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M68,65l-3,11 11,-3z" />
+
+</vector>
