@@ -1,13 +1,14 @@
 package com.homework.writer.domain
 
+import android.graphics.Canvas
 import android.graphics.Paint
-import androidx.compose.ui.graphics.Canvas
-import androidx.compose.ui.graphics.nativeCanvas
 import kotlin.random.Random
 
+/** Draws text with subtle, repeatable variations in position and rotation. */
 class HumanizerEngine(
     private val jitterIntensity: Float = 2f,
-    private val angleJitter: Float = 0.03f
+    private val angleJitterDegrees: Float = 1.5f,
+    private val seed: Int = 42
 ) {
     fun drawHumanizedText(
         canvas: Canvas,
@@ -17,33 +18,27 @@ class HumanizerEngine(
         basePaint: Paint,
         lineHeight: Float
     ) {
-        var currentX = startX
-        var currentY = startY
-        val rnd = Random(42)
+        val random = Random(seed)
+        var x = startX
+        var y = startY
 
-        for (char in text) {
-            if (char == '\n') {
-                currentX = startX
-                currentY += lineHeight
+        for (character in text) {
+            if (character == '\n') {
+                x = startX
+                y += lineHeight
                 continue
             }
 
-            val offsetX = (rnd.nextFloat() - 0.5f) * jitterIntensity
-            val offsetY = (rnd.nextFloat() - 0.5f) * jitterIntensity
-            
-            canvas.nativeCanvas.save()
-            val rotation = (rnd.nextFloat() - 0.5f) * angleJitter
-            canvas.nativeCanvas.rotate(rotation * 57.2958f, currentX + offsetX, currentY + offsetY)
+            val offsetX = (random.nextFloat() - 0.5f) * jitterIntensity
+            val offsetY = (random.nextFloat() - 0.5f) * jitterIntensity
+            val rotation = (random.nextFloat() - 0.5f) * 2f * angleJitterDegrees
 
-            canvas.nativeCanvas.drawText(
-                char.toString(),
-                currentX + offsetX,
-                currentY + offsetY,
-                basePaint
-            )
-            
-            canvas.nativeCanvas.restore()
-            currentX += basePaint.measureText(char.toString()) + (rnd.nextFloat() * 1.5f)
+            canvas.save()
+            canvas.rotate(rotation, x + offsetX, y + offsetY)
+            canvas.drawText(character.toString(), x + offsetX, y + offsetY, basePaint)
+            canvas.restore()
+
+            x += basePaint.measureText(character.toString()) + random.nextFloat() * 1.5f
         }
     }
 }
