@@ -10,8 +10,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.weight
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -23,11 +23,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -64,7 +64,7 @@ fun FontCreatorScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f)
+                .height(300.dp)
                 .background(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.shapes.medium)
                 .pointerInput(currentChar) {
                     detectDragGestures(
@@ -102,7 +102,7 @@ fun FontCreatorScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             OutlinedButton(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxWidth(0.32f),
                 onClick = {
                     paths.clear()
                     currentPoints = emptyList()
@@ -111,7 +111,7 @@ fun FontCreatorScreen(
             ) { Text("Очистить") }
 
             OutlinedButton(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxWidth(0.32f),
                 onClick = {
                     onCharacterFinished(paths.toList())
                     onPreviousChar()
@@ -119,7 +119,7 @@ fun FontCreatorScreen(
             ) { Text("← Назад") }
 
             Button(
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxWidth(0.32f),
                 onClick = {
                     if (currentPoints.isNotEmpty()) {
                         paths.add(pointsToPath(currentPoints))
